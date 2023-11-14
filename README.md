@@ -1,4 +1,4 @@
-# PDF Data Extractor
+# FNB PDF Data Extractor
 
 This project is a simple Node.js application that extracts FNB transaction data from PDF files and writes it to a CSV file. 
 The PDF files should be in a specific format, with a transaction section that starts with a line containing 'Date', 'Description', and 'Amount', and ends with a line containing 'Closing Balance'. 

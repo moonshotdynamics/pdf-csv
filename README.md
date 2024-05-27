@@ -13,12 +13,12 @@ Each transaction line should be split into date, description, and amount by two 
 
 1. Clone the repository:
 2. Navigate to the project directory:
-3. Install the dependencies:
+3. Install the dependencies: npm install
 
 ## Usage
 
 1. Place your PDF files in the `pdfs` directory.
-2. Run the application:
+2. Run the application: node index.js
 
 3. The extracted data will be written to `output.csv` in the project directory.
 

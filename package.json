@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "exceljs": "^4.4.0",
     "fast-csv": "^4.3.6",
     "fs": "^0.0.1-security",
     "pdf-parse": "^1.1.1",

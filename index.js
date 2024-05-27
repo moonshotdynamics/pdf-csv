@@ -25,6 +25,7 @@ function extractDataFromPDF(pdfData, year) {
   const lines = pdfData.text.split('\n');
   let transactions = [];
   let isTransactionSection = false;
+  let currentTransaction = null;
 
   for (let line of lines) {
     if (line.includes('Transactions in RAND (ZAR)')) {
@@ -38,11 +39,19 @@ function extractDataFromPDF(pdfData, year) {
     }
 
     if (isTransactionSection && line.trim()) {
-      const transaction = parseTransaction(line, year);
-      if (transaction) {
-        transactions.push(transaction);
+      if (line.match(/^\d{2} [A-Za-z]+/)) {
+        if (currentTransaction) {
+          transactions.push(currentTransaction);
+        }
+        currentTransaction = parseTransaction(line, year);
+      } else if (currentTransaction) {
+        currentTransaction.description += ' ' + line.trim();
       }
     }
+  }
+
+  if (currentTransaction) {
+    transactions.push(currentTransaction);
   }
 
   return transactions;
@@ -58,16 +67,16 @@ function parseTransaction(line, year) {
     const amount = amountMatch[0];
     const balance = balanceMatch[0];
     const descriptionStartIndex = dateMatch[0].length;
-    const descriptionEndIndex = line.indexOf(amount);
+    const descriptionEndIndex = line.indexOf(amountMatch[0]);
     const description = line
       .substring(descriptionStartIndex, descriptionEndIndex)
       .trim();
 
     return {
       date: formatDate(date.trim()),
-      description: description.replace(/,\d{2}[A-Za-z]+/, '').trim(),
-      amount: amount.trim(),
-      balance: balance.trim(),
+      description: description,
+      amount: amount,
+      balance: balance,
     };
   }
   return null;
@@ -78,7 +87,7 @@ function formatDate(dateStr) {
   const day = parts[0].padStart(2, '0');
   const month = parts[1].match(
     /Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/
-  )[0]; // Extract only the month part
+  )[0];
   const year = parts[2];
 
   return `${day} ${month} ${year}`;
@@ -88,7 +97,6 @@ async function writeToExcel(data, outputFilePath) {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Transactions');
 
-  // Add header row
   worksheet.columns = [
     { header: 'Date', key: 'date', width: 15 },
     { header: 'Description', key: 'description', width: 50 },
@@ -96,11 +104,10 @@ async function writeToExcel(data, outputFilePath) {
     { header: 'Balance', key: 'balance', width: 15 },
   ];
 
-  // Add data rows with formatting
   data.forEach((item) => {
     const row = worksheet.addRow(item);
     if (item.amount.includes('Cr')) {
-      row.getCell('amount').font = { bold: false };
+      row.getCell('amount').font = { bold: true };
     }
   });
 
@@ -121,7 +128,7 @@ function writeToCSV(data, outputFilePath) {
 }
 
 async function main() {
-  const pdfDirectory = './pdfs'; // Directory containing the PDF files
+  const pdfDirectory = './pdfs';
   const pdfFiles = fs
     .readdirSync(pdfDirectory)
     .filter((file) => path.extname(file).toLowerCase() === '.pdf')
@@ -135,7 +142,6 @@ async function main() {
     allData = allData.concat(extractedData);
   }
 
-  // Sort the data by date
   allData.sort((a, b) => {
     const dateA = new Date(a.date.split(' ').reverse().join('-'));
     const dateB = new Date(b.date.split(' ').reverse().join('-'));

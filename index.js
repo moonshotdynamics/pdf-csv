@@ -100,7 +100,7 @@ async function writeToExcel(data, outputFilePath) {
   data.forEach((item) => {
     const row = worksheet.addRow(item);
     if (item.amount.includes('Cr')) {
-      row.getCell('amount').font = { bold: true };
+      row.getCell('amount').font = { bold: false };
     }
   });
 
